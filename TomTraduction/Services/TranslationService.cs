@@ -3,6 +3,7 @@ using System.Reflection;
 using TomTraduction.Models;
 using System.Globalization;
 using System.Xml.Linq;
+using Microsoft.Extensions.Options;
 
 namespace TomTraduction.Services
 {
@@ -17,11 +18,16 @@ namespace TomTraduction.Services
     {
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<TranslationService> _logger;
+        private readonly TranslationOptions _translationOptions;
 
-        public TranslationService(IWebHostEnvironment environment, ILogger<TranslationService> logger)
+        public TranslationService(
+            IWebHostEnvironment environment, 
+            ILogger<TranslationService> logger,
+            IOptions<TranslationOptions> translationOptions)
         {
             _environment = environment;
             _logger = logger;
+            _translationOptions = translationOptions.Value;
         }
 
         public async Task<List<Translation>> SearchTranslationsAsync(TranslationFilter filter)
@@ -48,9 +54,9 @@ namespace TomTraduction.Services
         public async Task<List<Translation>> GetAllTranslationsAsync()
         {
             var translations = new List<Translation>();
-            var basePath = Path.Combine("C:\\Users\\jordantemp\\projet\\tomweb\\", "Shared", "Localization", "Tomate.Localization", "Resources");
+            var basePath = Path.Combine(_translationOptions.ResourcesBasePath, "Shared", "Localization", "Tomate.Localization", "Resources");
 
-			if (!Directory.Exists(basePath))
+            if (!Directory.Exists(basePath))
             {
                 // Si le chemin spécifique n'existe pas, chercher dans le répertoire courant
                 basePath = Path.Combine(_environment.ContentRootPath, "Resources");

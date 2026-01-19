@@ -1,9 +1,15 @@
+using TomTraduction.Models;
 using TomTraduction.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+// Configurer les options de traduction
+builder.Services.Configure<TranslationOptions>(
+    builder.Configuration.GetSection(TranslationOptions.SectionName));
+
 builder.Services.AddScoped<ITranslationService, TranslationService>();
 
 var app = builder.Build();
