@@ -1,0 +1,92 @@
+@page "/translations"
+@model TomTraduction.Pages.TranslationsModel
+@{
+    ViewData["Title"] = "Gestion des Traductions";
+}
+
+<h2>Gestion des Traductions</h2>
+
+<form method="get" class="mb-4">
+    <div class="row g-3">
+        <div class="col-md-2">
+            <label for="Code" class="form-label">Code</label>
+            <input type="text" class="form-control form-control-sm" name="Code" value="@Model.Filter.Code" placeholder="Rechercher par code..." />
+        </div>
+        <div class="col-md-2">
+            <label for="Francais" class="form-label">Français</label>
+            <input type="text" class="form-control form-control-sm" name="Francais" value="@Model.Filter.Francais" placeholder="Rechercher en français..." />
+        </div>
+        <div class="col-md-2">
+            <label for="Anglais" class="form-label">Anglais</label>
+            <input type="text" class="form-control form-control-sm" name="Anglais" value="@Model.Filter.Anglais" placeholder="Search in English..." />
+        </div>
+        <div class="col-md-2">
+            <label for="Portugais" class="form-label">Portugais</label>
+            <input type="text" class="form-control form-control-sm" name="Portugais" value="@Model.Filter.Portugais" placeholder="Pesquisar em português..." />
+        </div>
+        <div class="col-md-2">
+            <label for="Fichier" class="form-label">Fichier</label>
+            <input type="text" class="form-control form-control-sm" name="Fichier" value="@Model.Filter.Fichier" placeholder="Rechercher par fichier..." />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm me-2">Filtrer</button>
+            <a href="/translations" class="btn btn-secondary btn-sm">Reset</a>
+        </div>
+    </div>
+</form>
+
+<div class="mb-3">
+    <span class="badge bg-info">@Model.Translations.Count traduction(s) trouvée(s)</span>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Code</th>
+                <th>Français</th>
+                <th>Anglais</th>
+                <th>Portugais</th>
+                <th>Fichier</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Translations.Any())
+            {
+                @foreach (var translation in Model.Translations)
+                {
+                    <tr>
+                        <td><code>@translation.Code</code></td>
+                        <td>@translation.Francais</td>
+                        <td>@translation.Anglais</td>
+                        <td>@translation.Portugais</td>
+                        <td><span class="badge bg-secondary">@translation.Fichier</span></td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted">
+                        Aucune traduction trouvée avec les critères de recherche.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-submit sur changement des filtres avec un délai
+        let searchTimeout;
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            input.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.form.submit();
+                }, 500);
+            });
+        });
+    </script>
+}
