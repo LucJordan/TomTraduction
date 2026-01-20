@@ -57,16 +57,16 @@
     </div>
 </div>
 @{
-    if (Model.Success.HasValue)
+    if (Model.Success.HasValue && Model.Success.Value)
     {
         <div class="alert alert-@(Model.Success.Value ? "success" : "danger") mt-3">
-        if (Model.Success.Value){
-            <i class="fas fa-check-circle"></i> Traduction créée avec succès !
-            <a href="/translations?Code=@Model.Translation.Code" class="btn btn-sm btn-outline-success ms-2">Voir la traduction</a>
-        }
-        else{
-            <i class="fas fa-exclamation-triangle"></i> Erreur lors de la création de la traduction.
-        }
+            Traduction créée avec succès !
+        </div>
+    }
+    if (Model.Success.HasValue && Model.Success.Value == false)
+    {
+        <div class="alert alert-@(Model.Success.Value ? "success" : "danger") mt-3">
+            Erreur lors de la création de la traduction
         </div>
     }
 }
