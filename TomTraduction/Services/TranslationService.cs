@@ -108,7 +108,8 @@ namespace TomTraduction.Services
                                     Francais = kvp.Value,
                                     Anglais = englishTranslations.GetValueOrDefault(kvp.Key, ""),
                                     Portugais = portugueseTranslations.GetValueOrDefault(kvp.Key, ""),
-                                    Fichier = Path.GetFileNameWithoutExtension(baseFile)
+                                    Fichier = Path.GetFileNameWithoutExtension(baseFile),
+                                    CheminComplet = Path.GetDirectoryName(frenchFile) // Stocker le répertoire
                                 });
                             }
                         }
@@ -282,7 +283,14 @@ namespace TomTraduction.Services
 
         private async Task<bool> WriteToResxFileAsync(string basePath, string fileName, string culture, string key, string value)
         {
-            var filePath = Path.Combine(basePath, $"{fileName}.{culture}.resx");
+            // Chercher d'abord le fichier existant pour récupérer son répertoire
+            string? filePath = await FindExistingFilePathAsync(basePath, fileName, culture);
+            
+            if (filePath == null)
+            {
+                // Si aucun fichier existant, utiliser le basePath par défaut
+                filePath = Path.Combine(basePath, $"{fileName}.{culture}.resx");
+            }
             
             try
             {
@@ -337,6 +345,22 @@ namespace TomTraduction.Services
                 _logger.LogError(ex, $"Erreur lors de l'écriture dans le fichier {filePath}");
                 return false;
             }
+        }
+
+        private async Task<string?> FindExistingFilePathAsync(string basePath, string fileName, string culture)
+        {
+            return await Task.Run(() =>
+            {
+                if (!Directory.Exists(basePath))
+                    return null;
+
+                // Chercher tous les fichiers .resx correspondants
+                var searchPattern = $"{fileName}.{culture}.resx";
+                var foundFiles = Directory.GetFiles(basePath, searchPattern, SearchOption.AllDirectories);
+                
+                // Retourner le premier fichier trouvé, ou null si aucun
+                return foundFiles.FirstOrDefault();
+            });
         }
 
         private async Task<bool> RemoveFromResxFileAsync(string basePath, string fileName, string culture, string key)
