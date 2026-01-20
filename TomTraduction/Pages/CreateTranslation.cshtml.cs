@@ -46,21 +46,8 @@ namespace TomTraduction.Pages
                     Fichier = Translation.Fichier
                 };
 
-                if (Translation.AutoGenerate)
-                {
-                    var generated = await _translationService.GenerateTranslationAsync(
-                        Translation.Code, 
-                        Translation.Francais, 
-                        Translation.Fichier);
-                    
-                    translation.Anglais = generated.Anglais;
-                    translation.Portugais = generated.Portugais;
-                }
-                else
-                {
-                    translation.Anglais = Translation.Anglais;
-                    translation.Portugais = Translation.Portugais;
-                }
+                translation.Anglais = Translation.Anglais;
+                translation.Portugais = Translation.Portugais;
 
                 Success = await _translationService.CreateTranslationAsync(translation);
 
