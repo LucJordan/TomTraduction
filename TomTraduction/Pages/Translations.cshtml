@@ -1,5 +1,6 @@
 @page "/translations"
 @model TomTraduction.Pages.TranslationsModel
+@using TomTraduction.Models
 @{
     ViewData["Title"] = "Gestion des Traductions";
 }
@@ -12,30 +13,69 @@
 </div>
 
 <form method="get" class="mb-4">
+    <!-- Options globales de recherche -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <button class="btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#searchOptions">
+                    <i class="fas fa-cog"></i> Options de recherche avancée
+                </button>
+            </h6>
+        </div>
+        <div id="searchOptions" class="collapse">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="GlobalSearchType" class="form-label">Type de recherche</label>
+                        <select name="GlobalSearchType" class="form-select form-select-sm">
+                            <option value="@((int)SearchType.Contains)" selected="@(Model.Filter.GlobalSearchType == SearchType.Contains)">Contient</option>
+                            <option value="@((int)SearchType.BeginsWith)" selected="@(Model.Filter.GlobalSearchType == SearchType.BeginsWith)">Commence par</option>
+                            <option value="@((int)SearchType.EndsWith)" selected="@(Model.Filter.GlobalSearchType == SearchType.EndsWith)">Se termine par</option>
+                            <option value="@((int)SearchType.Equals)" selected="@(Model.Filter.GlobalSearchType == SearchType.Equals)">Égal exactement</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" name="GlobalCaseSensitive" value="true" checked="@Model.Filter.GlobalCaseSensitive" />
+                            <label class="form-check-label" for="GlobalCaseSensitive">
+                                Sensible à la casse
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres de recherche -->
     <div class="row g-3">
         <div class="col-md-2">
-            <label for="Code" class="form-label">Code</label>
-            <input type="text" class="form-control form-control-sm" name="Code" value="@Model.Filter.Code" placeholder="Rechercher par code..." />
+            <label for="CodeValue" class="form-label">Code</label>
+            <input type="text" class="form-control form-control-sm" name="CodeValue" value="@Model.Filter.Code.Value" placeholder="Rechercher par code..." />
         </div>
         <div class="col-md-2">
-            <label for="Francais" class="form-label">Français</label>
-            <input type="text" class="form-control form-control-sm" name="Francais" value="@Model.Filter.Francais" placeholder="Rechercher en français..." />
+            <label for="FrancaisValue" class="form-label">Français</label>
+            <input type="text" class="form-control form-control-sm" name="FrancaisValue" value="@Model.Filter.Francais.Value" placeholder="Rechercher en français..." />
         </div>
         <div class="col-md-2">
-            <label for="Anglais" class="form-label">Anglais</label>
-            <input type="text" class="form-control form-control-sm" name="Anglais" value="@Model.Filter.Anglais" placeholder="Search in English..." />
+            <label for="AnglaisValue" class="form-label">Anglais</label>
+            <input type="text" class="form-control form-control-sm" name="AnglaisValue" value="@Model.Filter.Anglais.Value" placeholder="Search in English..." />
         </div>
         <div class="col-md-2">
-            <label for="Portugais" class="form-label">Portugais</label>
-            <input type="text" class="form-control form-control-sm" name="Portugais" value="@Model.Filter.Portugais" placeholder="Pesquisar em português..." />
+            <label for="PortugaisValue" class="form-label">Portugais</label>
+            <input type="text" class="form-control form-control-sm" name="PortugaisValue" value="@Model.Filter.Portugais.Value" placeholder="Pesquisar em português..." />
         </div>
         <div class="col-md-2">
-            <label for="Fichier" class="form-label">Fichier</label>
-            <input type="text" class="form-control form-control-sm" name="Fichier" value="@Model.Filter.Fichier" placeholder="Rechercher par fichier..." />
+            <label for="FichierValue" class="form-label">Fichier</label>
+            <input type="text" class="form-control form-control-sm" name="FichierValue" value="@Model.Filter.Fichier.Value" placeholder="Rechercher par fichier..." />
         </div>
         <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary btn-sm me-2">Filtrer</button>
-            <a href="/translations" class="btn btn-secondary btn-sm">Reset</a>
+            <button type="submit" class="btn btn-primary btn-sm me-2">
+                <i class="fas fa-search"></i> Filtrer
+            </button>
+            <a href="/translations" class="btn btn-secondary btn-sm">
+                <i class="fas fa-undo"></i> Reset
+            </a>
         </div>
     </div>
 </form>
@@ -97,11 +137,11 @@
             {
                 <tr>
                     <td colspan="6" class="text-center text-muted">
-                        @if (Model.Filter != null && !string.IsNullOrEmpty(Model.Filter.Code + Model.Filter.Francais + Model.Filter.Anglais + Model.Filter.Portugais + Model.Filter.Fichier))
+                        @if (Model.HasSearched)
                         {
                             <div>
                                 <p>Aucune traduction trouvée avec ces critères.</p>
-                                <a href="/translations/create?code=@(Model.Filter.Code)&francais=@(Model.Filter.Francais)" class="btn btn-success btn-sm">
+                                <a href="/translations/create?code=@(Model.Filter.Code.Value)&francais=@(Model.Filter.Francais.Value)" class="btn btn-success btn-sm">
                                     <i class="fas fa-plus"></i> Créer cette traduction
                                 </a>
                             </div>
@@ -126,8 +166,15 @@
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
                     this.form.submit();
-                }, 500);
+                }, 800);
             });
         });*/
+
+        // Auto-submit quand on change les options de recherche
+        document.querySelectorAll('select, input[type="checkbox"]').forEach(element => {
+            element.addEventListener('change', function() {
+                this.form.submit();
+            });
+        });
     </script>
 }

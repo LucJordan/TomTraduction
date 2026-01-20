@@ -50,11 +50,11 @@ namespace TomTraduction.Services
 
         private bool IsFilterEmpty(TranslationFilter filter)
         {
-            return string.IsNullOrWhiteSpace(filter.Code) &&
-                   string.IsNullOrWhiteSpace(filter.Francais) &&
-                   string.IsNullOrWhiteSpace(filter.Anglais) &&
-                   string.IsNullOrWhiteSpace(filter.Portugais) &&
-                   string.IsNullOrWhiteSpace(filter.Fichier);
+            return string.IsNullOrWhiteSpace(filter.Code.Value) &&
+                   string.IsNullOrWhiteSpace(filter.Francais.Value) &&
+                   string.IsNullOrWhiteSpace(filter.Anglais.Value) &&
+                   string.IsNullOrWhiteSpace(filter.Portugais.Value) &&
+                   string.IsNullOrWhiteSpace(filter.Fichier.Value);
         }
 
         public async Task<List<Translation>> GetAllTranslationsAsync()
@@ -109,7 +109,7 @@ namespace TomTraduction.Services
                                     Anglais = englishTranslations.GetValueOrDefault(kvp.Key, ""),
                                     Portugais = portugueseTranslations.GetValueOrDefault(kvp.Key, ""),
                                     Fichier = Path.GetFileNameWithoutExtension(baseFile),
-                                    CheminComplet = Path.GetDirectoryName(frenchFile) // Stocker le répertoire
+                                    CheminComplet = Path.GetDirectoryName(frenchFile)
                                 });
                             }
                         }
@@ -128,32 +128,49 @@ namespace TomTraduction.Services
         {
             var query = translations.AsQueryable();
 
-            if (!string.IsNullOrEmpty(filter.Code))
+            if (!string.IsNullOrEmpty(filter.Code.Value))
             {
-                query = query.Where(t => t.Code.Contains(filter.Code, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(t => MatchesFilter(t.Code, filter.Code));
             }
 
-            if (!string.IsNullOrEmpty(filter.Francais))
+            if (!string.IsNullOrEmpty(filter.Francais.Value))
             {
-                query = query.Where(t => t.Francais.Contains(filter.Francais, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(t => MatchesFilter(t.Francais, filter.Francais));
             }
 
-            if (!string.IsNullOrEmpty(filter.Anglais))
+            if (!string.IsNullOrEmpty(filter.Anglais.Value))
             {
-                query = query.Where(t => t.Anglais.Contains(filter.Anglais, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(t => MatchesFilter(t.Anglais, filter.Anglais));
             }
 
-            if (!string.IsNullOrEmpty(filter.Portugais))
+            if (!string.IsNullOrEmpty(filter.Portugais.Value))
             {
-                query = query.Where(t => t.Portugais.Contains(filter.Portugais, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(t => MatchesFilter(t.Portugais, filter.Portugais));
             }
 
-            if (!string.IsNullOrEmpty(filter.Fichier))
+            if (!string.IsNullOrEmpty(filter.Fichier.Value))
             {
-                query = query.Where(t => t.Fichier.Contains(filter.Fichier, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(t => MatchesFilter(t.Fichier, filter.Fichier));
             }
 
             return query.ToList();
+        }
+
+        private bool MatchesFilter(string fieldValue, FieldFilter filter)
+        {
+            if (string.IsNullOrEmpty(filter.Value))
+                return true;
+
+            var comparison = filter.CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
+            return filter.SearchType switch
+            {
+                SearchType.Contains => fieldValue.Contains(filter.Value, comparison),
+                SearchType.BeginsWith => fieldValue.StartsWith(filter.Value, comparison),
+                SearchType.EndsWith => fieldValue.EndsWith(filter.Value, comparison),
+                SearchType.Equals => fieldValue.Equals(filter.Value, comparison),
+                _ => fieldValue.Contains(filter.Value, comparison)
+            };
         }
 
         public async Task<List<string>> GetAvailableFilesAsync()
@@ -187,7 +204,6 @@ namespace TomTraduction.Services
             {
                 var basePath = GetBasePath();
                 
-                // Créer les fichiers pour chaque langue
                 var success = true;
                 
                 if (!string.IsNullOrEmpty(translation.Francais))
@@ -221,7 +237,6 @@ namespace TomTraduction.Services
 
         public async Task<bool> UpdateTranslationAsync(Translation translation)
         {
-            // Même logique que CreateTranslationAsync - les fichiers RESX peuvent être mis à jour de la même manière
             return await CreateTranslationAsync(translation);
         }
 
@@ -260,7 +275,6 @@ namespace TomTraduction.Services
                 Code = code,
                 Francais = frenchText,
                 Fichier = fileName,
-                // Générations basiques - à améliorer avec un service de traduction
                 Anglais = await GenerateBasicTranslationAsync(frenchText, "en"),
                 Portugais = await GenerateBasicTranslationAsync(frenchText, "pt")
             };
@@ -270,25 +284,22 @@ namespace TomTraduction.Services
 
         private async Task<string> GenerateBasicTranslationAsync(string text, string targetLanguage)
         {
-            // Génération basique - vous pouvez intégrer un service de traduction ici
-            await Task.Delay(1); // Simulation async
+            await Task.Delay(1);
             
             return targetLanguage switch
             {
-                "en" => $"[EN] {text}",  // Placeholder - remplacez par un vrai service de traduction
-                "pt" => $"[PT] {text}",  // Placeholder - remplacez par un vrai service de traduction
+                "en" => $"[EN] {text}",
+                "pt" => $"[PT] {text}",
                 _ => text
             };
         }
 
         private async Task<bool> WriteToResxFileAsync(string basePath, string fileName, string culture, string key, string value)
         {
-            // Chercher d'abord le fichier existant pour récupérer son répertoire
             string? filePath = await FindExistingFilePathAsync(basePath, fileName, culture);
             
             if (filePath == null)
             {
-                // Si aucun fichier existant, utiliser le basePath par défaut
                 filePath = Path.Combine(basePath, $"{fileName}.{culture}.resx");
             }
             
@@ -302,10 +313,8 @@ namespace TomTraduction.Services
                 }
                 else
                 {
-                    // Créer la structure de base du fichier RESX
                     doc = CreateBaseResxDocument();
                     
-                    // Créer le répertoire si nécessaire
                     var directory = Path.GetDirectoryName(filePath);
                     if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                     {
@@ -318,7 +327,6 @@ namespace TomTraduction.Services
                 
                 if (existingData != null)
                 {
-                    // Mettre à jour la valeur existante
                     var valueElement = existingData.Element("value");
                     if (valueElement != null)
                     {
@@ -327,10 +335,8 @@ namespace TomTraduction.Services
                 }
                 else
                 {
-                    // Ajouter une nouvelle entrée
                     var dataElement = new XElement("data",
                         new XAttribute("name", key),
-                        //new XAttribute("xml:space", "preserve"),
                         new XElement("value", value)
                     );
                     
@@ -354,11 +360,9 @@ namespace TomTraduction.Services
                 if (!Directory.Exists(basePath))
                     return null;
 
-                // Chercher tous les fichiers .resx correspondants
                 var searchPattern = $"{fileName}{culture}.resx";
                 var foundFiles = Directory.GetFiles(basePath, searchPattern, SearchOption.AllDirectories);
                 
-                // Retourner le premier fichier trouvé, ou null si aucun
                 return foundFiles.FirstOrDefault();
             });
         }
@@ -369,7 +373,7 @@ namespace TomTraduction.Services
             
             if (!File.Exists(filePath))
             {
-                return true; // Le fichier n'existe pas, donc la clé n'existe pas non plus
+                return true;
             }
 
             try
@@ -442,7 +446,6 @@ namespace TomTraduction.Services
             var fileName = Path.GetFileNameWithoutExtension(filePath);
             if (fileName == null) return null;
 
-            // Retirer les suffixes de culture (.fr, .en, .pt, etc.)
             var cultureSuffixes = new[] { "fr", "en", "pt" };
             
             foreach (var suffix in cultureSuffixes.OrderByDescending(s => s.Length))
