@@ -300,7 +300,7 @@ namespace TomTraduction.Services
             
             if (filePath == null)
             {
-                filePath = Path.Combine(basePath, $"{fileName}.{culture}.resx");
+                filePath = Path.Combine(basePath, $"{fileName}{culture}.resx");
             }
             
             try
@@ -327,7 +327,7 @@ namespace TomTraduction.Services
                 
                 if (existingData != null)
                 {
-                    throw new Exception("Ce code existe dï¿½jï¿½");
+                    throw new Exception("Ce code existe déjà");
                     var valueElement = existingData.Element("value");
                     if (valueElement != null)
                     {
@@ -370,7 +370,7 @@ namespace TomTraduction.Services
 
         private async Task<bool> RemoveFromResxFileAsync(string basePath, string fileName, string culture, string key)
         {
-            var filePath = Path.Combine(basePath, $"{fileName}.{culture}.resx");
+            var filePath = Path.Combine(basePath, $"{fileName}{culture}.resx");
             
             if (!File.Exists(filePath))
             {
