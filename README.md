@@ -1,4 +1,4 @@
-# TomTraduction
+# TomTraduction (test)
 
 Application de gestion de traductions développée avec ASP.NET Core Razor Pages et .NET 9.
 
