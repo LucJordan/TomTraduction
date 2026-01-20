@@ -330,7 +330,7 @@ namespace TomTraduction.Services
                     // Ajouter une nouvelle entrée
                     var dataElement = new XElement("data",
                         new XAttribute("name", key),
-                        new XAttribute("xml:space", "preserve"),
+                        //new XAttribute("xml:space", "preserve"),
                         new XElement("value", value)
                     );
                     
@@ -355,7 +355,7 @@ namespace TomTraduction.Services
                     return null;
 
                 // Chercher tous les fichiers .resx correspondants
-                var searchPattern = $"{fileName}.{culture}.resx";
+                var searchPattern = $"{fileName}{culture}.resx";
                 var foundFiles = Directory.GetFiles(basePath, searchPattern, SearchOption.AllDirectories);
                 
                 // Retourner le premier fichier trouvé, ou null si aucun
