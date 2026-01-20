@@ -327,6 +327,7 @@ namespace TomTraduction.Services
                 
                 if (existingData != null)
                 {
+                    throw new Exception("Ce code existe d�j�");
                     var valueElement = existingData.Element("value");
                     if (valueElement != null)
                     {
