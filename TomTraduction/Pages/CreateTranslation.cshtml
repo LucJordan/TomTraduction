@@ -1,0 +1,140 @@
+@page "/translations/create"
+@model TomTraduction.Pages.CreateTranslationModel
+@{
+    ViewData["Title"] = "Créer une Traduction";
+}
+
+<h2>Créer une Nouvelle Traduction</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <form method="post">
+            <div class="mb-3">
+                <label for="Code" class="form-label">Code de la traduction *</label>
+                <input type="text" class="form-control" asp-for="Translation.Code" placeholder="ex: Button.Save" required />
+                <div class="form-text">Utilisez une notation avec des points pour organiser (ex: Menu.File.Open)</div>
+                <span asp-validation-for="Translation.Code" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label for="Fichier" class="form-label">Fichier de destination *</label>
+                <select class="form-select" asp-for="Translation.Fichier" required>
+                    <option value="">-- Sélectionner un fichier --</option>
+                    @foreach (var file in Model.AvailableFiles)
+                    {
+                        <option value="@file">@file</option>
+                    }
+                </select>
+                <div class="form-text">Ou entrez un nouveau nom de fichier</div>
+                <input type="text" class="form-control mt-2" placeholder="Nouveau fichier (optionnel)"
+                       onchange="if(this.value) document.querySelector('[asp-for=Translation\\.Fichier]').value = this.value" />
+                <span asp-validation-for="Translation.Fichier" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label for="Francais" class="form-label">Français *</label>
+                <textarea class="form-control" asp-for="Translation.Francais" rows="2" placeholder="Texte en français" required></textarea>
+                <span asp-validation-for="Translation.Francais" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" asp-for="Translation.AutoGenerate" checked />
+                    <label class="form-check-label" for="AutoGenerate">
+                        Générer automatiquement les traductions anglaise et portugaise
+                    </label>
+                </div>
+            </div>
+
+            <div id="manualTranslations" style="display: none;">
+                <div class="mb-3">
+                    <label for="Anglais" class="form-label">Anglais</label>
+                    <textarea class="form-control" asp-for="Translation.Anglais" rows="2" placeholder="English text"></textarea>
+                    <span asp-validation-for="Translation.Anglais" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label for="Portugais" class="form-label">Portugais</label>
+                    <textarea class="form-control" asp-for="Translation.Portugais" rows="2" placeholder="Texto em português"></textarea>
+                    <span asp-validation-for="Translation.Portugais" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Créer la Traduction
+                </button>
+                <button type="button" id="previewBtn" class="btn btn-secondary ms-2">
+                    <i class="fas fa-eye"></i> Prévisualiser
+                </button>
+                <a href="/translations" class="btn btn-outline-secondary ms-2">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">&#128161; Conseils</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><strong>Codes :</strong> Utilisez des noms descriptifs avec des points (ex: Button.Save, Message.Error.Network)</li>
+                    <li><strong>Cohérence :</strong> Respectez les conventions de nommage de votre équipe</li>
+                    <li><strong>Génération automatique :</strong> Les traductions seront marquées avec [EN] et [PT] pour révision</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="previewCard" class="card mt-3" style="display: none;">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Prévisualisation</h5>
+            </div>
+            <div class="card-body">
+                <div id="previewContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+@{
+    if (Model.Success.HasValue)
+    {
+        <div class="alert alert-@(Model.Success.Value ? "success" : "danger") mt-3">
+        if (Model.Success.Value){
+            <i class="fas fa-check-circle"></i> Traduction créée avec succès !
+            <a href="/translations?Code=@Model.Translation.Code" class="btn btn-sm btn-outline-success ms-2">Voir la traduction</a>
+        }
+        else{
+            <i class="fas fa-exclamation-triangle"></i> Erreur lors de la création de la traduction.
+        }
+        </div>
+    }
+}
+
+<script>
+    document.getElementById('Translation_AutoGenerate').addEventListener('change', function() {
+        const manualDiv = document.getElementById('manualTranslations');
+        manualDiv.style.display = this.checked ? 'none' : 'block';
+    });
+
+    document.getElementById('previewBtn').addEventListener('click', function() {
+        const code = document.querySelector('[asp-for="Translation.Code"]').value;
+        const francais = document.querySelector('[asp-for="Translation.Francais"]').value;
+        const anglais = document.querySelector('[asp-for="Translation.Anglais"]').value;
+        const portugais = document.querySelector('[asp-for="Translation.Portugais"]').value;
+        const autoGen = document.getElementById('Translation_AutoGenerate').checked;
+
+        const previewCard = document.getElementById('previewCard');
+        const previewContent = document.getElementById('previewContent');
+
+        if (code && francais) {
+            previewContent.innerHTML = `
+                <strong>Code :</strong> ${code}<br>
+                <strong>Français :</strong> ${francais}<br>
+                <strong>Anglais :</strong> ${autoGen ? '[EN] ' + francais : (anglais || 'Non spécifié')}<br>
+                <strong>Portugais :</strong> ${autoGen ? '[PT] ' + francais : (portugais || 'Non spécifié')}
+            `;
+            previewCard.style.display = 'block';
+        } else {
+            previewCard.style.display = 'none';
+        }
+    });
+</script>

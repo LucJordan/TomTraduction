@@ -4,7 +4,12 @@
     ViewData["Title"] = "Gestion des Traductions";
 }
 
-<h2>Gestion des Traductions</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Gestion des Traductions</h2>
+    <a href="/translations/create" class="btn btn-success">
+        <i class="fas fa-plus"></i> Créer une Traduction
+    </a>
+</div>
 
 <form method="get" class="mb-4">
     <div class="row g-3">
@@ -35,8 +40,14 @@
     </div>
 </form>
 
-<div class="mb-3">
+<div class="mb-3 d-flex justify-content-between align-items-center">
     <span class="badge bg-info">@Model.Translations.Count traduction(s) trouvée(s)</span>
+    @if (Model.Translations.Any())
+    {
+        <small class="text-muted">
+            Les traductions marquées [EN] ou [PT] sont générées automatiquement et peuvent nécessiter une révision.
+        </small>
+    }
 </div>
 
 <div class="table-responsive">
@@ -48,6 +59,7 @@
                 <th>Anglais</th>
                 <th>Portugais</th>
                 <th>Fichier</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -58,17 +70,52 @@
                     <tr>
                         <td><code>@translation.Code</code></td>
                         <td>@translation.Francais</td>
-                        <td>@translation.Anglais</td>
-                        <td>@translation.Portugais</td>
+                        <td>
+                            @if (translation.Anglais.StartsWith("[EN]"))
+                            {
+                                <span class="text-warning" title="Traduction générée automatiquement">@translation.Anglais</span>
+                            }
+                            else
+                            {
+                                @translation.Anglais
+                            }
+                        </td>
+                        <td>
+                            @if (translation.Portugais.StartsWith("[PT]"))
+                            {
+                                <span class="text-warning" title="Traduction générée automatiquement">@translation.Portugais</span>
+                            }
+                            else
+                            {
+                                @translation.Portugais
+                            }
+                        </td>
                         <td><span class="badge bg-secondary">@translation.Fichier</span></td>
+                        <td>
+                            <a href="/translations/edit/@translation.Code?file=@translation.Fichier" class="btn btn-sm btn-outline-primary" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
                     </tr>
                 }
             }
             else
             {
                 <tr>
-                    <td colspan="5" class="text-center text-muted">
-                        Aucune traduction trouvée avec les critères de recherche.
+                    <td colspan="6" class="text-center text-muted">
+                        @if (Model.Filter != null && !string.IsNullOrEmpty(Model.Filter.Code + Model.Filter.Francais + Model.Filter.Anglais + Model.Filter.Portugais + Model.Filter.Fichier))
+                        {
+                            <div>
+                                <p>Aucune traduction trouvée avec ces critères.</p>
+                                <a href="/translations/create?code=@(Model.Filter.Code)&francais=@(Model.Filter.Francais)" class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus"></i> Créer cette traduction
+                                </a>
+                            </div>
+                        }
+                        else
+                        {
+                            <p>Utilisez les filtres ci-dessus pour rechercher des traductions.</p>
+                        }
                     </td>
                 </tr>
             }
