@@ -328,11 +328,6 @@ namespace TomTraduction.Services
                 if (existingData != null)
                 {
                     throw new Exception("Ce code existe déjà");
-                    var valueElement = existingData.Element("value");
-                    if (valueElement != null)
-                    {
-                        valueElement.Value = value;
-                    }
                 }
                 else
                 {
