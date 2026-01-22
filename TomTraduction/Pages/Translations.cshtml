@@ -1,8 +1,10 @@
 @page "/translations"
 @model TomTraduction.Pages.TranslationsModel
 @using TomTraduction.Models
+@using System.Text.Encodings.Web
 @{
     ViewData["Title"] = "Gestion des Traductions";
+    string JsEncode(string value) => JavaScriptEncoder.Default.Encode(value);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -10,6 +12,30 @@
     <a href="/translations/create" class="btn btn-success">
         <i class="fas fa-plus"></i> Créer une Traduction
     </a>
+</div>
+
+<!-- Toast container pour les notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="copyToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-copy text-success me-2"></i>
+            <strong class="me-auto">Copie réussie</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            Le code a été copié dans le presse-papier avec succès !
+        </div>
+    </div>
+    <div id="copyErrorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+            <strong class="me-auto">Erreur de copie</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            Impossible de copier le code. Veuillez réessayer.
+        </div>
+    </div>
 </div>
 
 <form method="get" class="mb-4">
@@ -80,7 +106,6 @@
     </div>
 </form>
 
-
 <div class="table-responsive">
     <table class="table table-striped table-hover">
         <thead class="table-dark">
@@ -90,6 +115,7 @@
                 <th>Anglais</th>
                 <th>Portugais</th>
                 <th>Fichier</th>
+                <th>Code à copier</th>
             </tr>
         </thead>
         <tbody>
@@ -121,6 +147,17 @@
                             }
                         </td>
                         <td><span class="badge bg-secondary">@translation.Fichier</span></td>
+                        <td class="d-flex align-items-center gap-2">
+                            <button class="btn btn-sm btn-outline-primary copy-btn" 
+                                    type="button" 
+                                    onclick="copyToClipboard('@JsEncode(translation.CodeACopier)', this)" 
+                                    title="Copier le code dans le presse-papier"
+                                    data-bs-toggle="tooltip">
+                                <i class="fas fa-copy me-1"></i>
+                                <span class="copy-text">Copier</span>
+                            </button>
+                            <code class="text-muted">@translation.CodeACopier</code>
+                        </td>
                     </tr>
                 }
             }
@@ -147,6 +184,14 @@
 
 @section Scripts {
     <script>
+        // Initialiser les tooltips Bootstrap
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+
         // Auto-submit sur changement des filtres avec un délai
         /*let searchTimeout;
         document.querySelectorAll('input[type="text"]').forEach(input => {
@@ -164,5 +209,111 @@
                 this.form.submit();
             });
         });
+
+        function copyToClipboard(text, buttonElement) {
+            // Désactiver le bouton pendant la copie
+            buttonElement.disabled = true;
+            const originalContent = buttonElement.innerHTML;
+            buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i><span class="copy-text">Copie...</span>';
+
+            // Vérifier si l'API Clipboard est supportée
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showCopyFeedback(buttonElement, true, originalContent);
+                    showToast('copyToast');
+                }).catch(function(err) {
+                    console.error('Erreur lors de la copie avec l\'API Clipboard : ', err);
+                    fallbackCopyToClipboard(text, buttonElement, originalContent);
+                });
+            } else {
+                // Fallback pour les navigateurs plus anciens ou contextes non sécurisés
+                fallbackCopyToClipboard(text, buttonElement, originalContent);
+            }
+        }
+
+        function fallbackCopyToClipboard(text, buttonElement, originalContent) {
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-999999px';
+                textarea.style.top = '-999999px';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                if (successful) {
+                    showCopyFeedback(buttonElement, true, originalContent);
+                    showToast('copyToast');
+                } else {
+                    showCopyFeedback(buttonElement, false, originalContent);
+                    showToast('copyErrorToast');
+                }
+            } catch (err) {
+                console.error('Erreur lors de la copie avec execCommand : ', err);
+                showCopyFeedback(buttonElement, false, originalContent);
+                showToast('copyErrorToast');
+            }
+        }
+
+        function showCopyFeedback(buttonElement, success, originalContent) {
+            if (success) {
+                buttonElement.innerHTML = '<i class="fas fa-check text-success me-1"></i><span class="copy-text">Copié !</span>';
+                buttonElement.classList.add('btn-success');
+                buttonElement.classList.remove('btn-outline-primary');
+            } else {
+                buttonElement.innerHTML = '<i class="fas fa-times text-danger me-1"></i><span class="copy-text">Erreur</span>';
+                buttonElement.classList.add('btn-danger');
+                buttonElement.classList.remove('btn-outline-primary');
+            }
+            
+            setTimeout(() => {
+                buttonElement.innerHTML = originalContent;
+                buttonElement.classList.remove('btn-success', 'btn-danger');
+                buttonElement.classList.add('btn-outline-primary');
+                buttonElement.disabled = false;
+            }, 2000);
+        }
+
+        function showToast(toastId) {
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 3000
+            });
+            toast.show();
+        }
     </script>
+
+    <style>
+        .copy-btn {
+            transition: all 0.2s ease;
+            min-width: 80px;
+        }
+        
+        .copy-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .copy-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .copy-text {
+            font-size: 0.75rem;
+        }
+        
+        .table td {
+            vertical-align: middle;
+        }
+        
+        .toast {
+            min-width: 250px;
+        }
+    </style>
 }

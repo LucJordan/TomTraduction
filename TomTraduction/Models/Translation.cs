@@ -8,7 +8,14 @@ namespace TomTraduction.Models
         public string Portugais { get; set; } = string.Empty;
         public string Fichier { get; set; } = string.Empty;
         public string? CheminComplet { get; set; }
-    }
+        public string CodeACopier 
+        { 
+            get 
+            { 
+                return $"Localization.Get(ResXEnum.{Fichier},\"{Code}\")"; 
+            }
+		}
+	}
 
     public enum SearchType
     {
